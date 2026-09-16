@@ -1,14 +1,13 @@
 package com.solutis.projeto.helpdesk_user_service.dto;
 
 import java.time.LocalDateTime;
-import com.solutis.projeto.helpdesk_user_service.entity.Role;
 import com.solutis.projeto.helpdesk_user_service.entity.User;
 
 public record UserResponseDTO(
     Long id,
     String name,
     String email,
-    Role role,
+    String role,
     boolean active,
     LocalDateTime createdAt
 ) {
@@ -17,7 +16,7 @@ public record UserResponseDTO(
             user.getId(),
             user.getName(),
             user.getEmail(),
-            user.getRole(),
+            user.getRole() != null ? user.getRole().getName() : null,
             user.isActive(),
             user.getCreatedAt()
         );

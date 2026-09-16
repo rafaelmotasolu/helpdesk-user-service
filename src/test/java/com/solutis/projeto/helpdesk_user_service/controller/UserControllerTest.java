@@ -3,9 +3,10 @@ package com.solutis.projeto.helpdesk_user_service.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solutis.projeto.helpdesk_user_service.dto.UserCreateDTO;
 import com.solutis.projeto.helpdesk_user_service.dto.UserResponseDTO;
-import com.solutis.projeto.helpdesk_user_service.entity.Role;
+import com.solutis.projeto.helpdesk_user_service.repository.RoleRepository;
 import com.solutis.projeto.helpdesk_user_service.security.JwtTokenProvider;
 import com.solutis.projeto.helpdesk_user_service.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -38,14 +41,22 @@ class UserControllerTest {
     private UserService userService;
 
     @MockitoBean
+    private RoleRepository roleRepository;
+
+    @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(roleRepository.existsByNameIgnoreCase(anyString())).thenReturn(true);
+    }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     @DisplayName("POST /users - ADMIN deve criar usuário e retornar 201 Created")
     void adminShouldCreateUserSuccessfully() throws Exception {
-        UserCreateDTO dto = new UserCreateDTO("Joao Dev", "joao@helpdesk.com", "123456", Role.CLIENT);
-        UserResponseDTO responseDTO = new UserResponseDTO(1L, "Joao Dev", "joao@helpdesk.com", Role.CLIENT, true, LocalDateTime.now());
+        UserCreateDTO dto = new UserCreateDTO("Joao Dev", "joao@helpdesk.com", "123456", "CLIENT");
+        UserResponseDTO responseDTO = new UserResponseDTO(1L, "Joao Dev", "joao@helpdesk.com", "CLIENT", true, LocalDateTime.now());
 
         when(userService.create(any(UserCreateDTO.class))).thenReturn(responseDTO);
 
@@ -62,7 +73,7 @@ class UserControllerTest {
     @WithMockUser(roles = "CLIENT")
     @DisplayName("POST /users - CLIENT não deve ter autorização e receber 403 Forbidden")
     void clientCannotCreateUser() throws Exception {
-        UserCreateDTO dto = new UserCreateDTO("Joao Dev", "joao@helpdesk.com", "123456", Role.CLIENT);
+        UserCreateDTO dto = new UserCreateDTO("Joao Dev", "joao@helpdesk.com", "123456", "CLIENT");
 
         mockMvc.perform(post("/users")
                         .with(csrf())
@@ -75,7 +86,6 @@ class UserControllerTest {
     @WithMockUser(roles = "ADMIN")
     @DisplayName("POST /users - Deve retornar 400 Bad Request se campos obrigatórios forem inválidos")
     void shouldReturnBadRequestOnInvalidPayload() throws Exception {
-        // Envio com email inválido e senha curta
         UserCreateDTO invalidDto = new UserCreateDTO("", "email-invalido", "123", null);
 
         mockMvc.perform(post("/users")
@@ -87,11 +97,26 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("POST /users - Deve retornar 400 se a role informada não existir na base de dados")
+    void shouldReturnBadRequestWhenRoleDoesNotExistInDatabase() throws Exception {
+        when(roleRepository.existsByNameIgnoreCase("ROLE_INEXISTENTE")).thenReturn(false);
+        UserCreateDTO dto = new UserCreateDTO("Joao Dev", "joao@helpdesk.com", "123456", "ROLE_INEXISTENTE");
+
+        mockMvc.perform(post("/users")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.role").value("O perfil (role) informado não existe na base de dados"));
+    }
+
+    @Test
     @WithMockUser(roles = "TECHNICIAN")
     @DisplayName("GET /users - Técnico deve conseguir listar usuários e receber 200 OK")
     void technicianCanListUsers() throws Exception {
         when(userService.findAll()).thenReturn(List.of(
-                new UserResponseDTO(1L, "Admin", "admin@helpdesk.com", Role.ADMIN, true, LocalDateTime.now())
+                new UserResponseDTO(1L, "Admin", "admin@helpdesk.com", "ADMIN", true, LocalDateTime.now())
         ));
 
         mockMvc.perform(get("/users"))

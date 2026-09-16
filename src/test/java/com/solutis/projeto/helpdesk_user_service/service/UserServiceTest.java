@@ -6,6 +6,7 @@ import com.solutis.projeto.helpdesk_user_service.entity.Role;
 import com.solutis.projeto.helpdesk_user_service.entity.User;
 import com.solutis.projeto.helpdesk_user_service.exception.BusinessException;
 import com.solutis.projeto.helpdesk_user_service.exception.ResourceNotFoundException;
+import com.solutis.projeto.helpdesk_user_service.repository.RoleRepository;
 import com.solutis.projeto.helpdesk_user_service.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,20 +27,25 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
 
     @Test
-    @DisplayName("Deve criar um usuário com sucesso e codificar a senha")
+    @DisplayName("Deve criar um usuário com sucesso quando a role existir no banco e codificar a senha")
     void shouldCreateUserSuccessfully() {
-        UserCreateDTO dto = new UserCreateDTO("Carlos Silva", "carlos@helpdesk.com", "senha123", Role.TECHNICIAN);
+        UserCreateDTO dto = new UserCreateDTO("Carlos Silva", "carlos@helpdesk.com", "senha123", "TECHNICIAN");
+        Role technicianRole = new Role(2L, "TECHNICIAN");
 
         when(userRepository.existsByEmail(dto.email())).thenReturn(false);
+        when(roleRepository.findByNameIgnoreCase("TECHNICIAN")).thenReturn(Optional.of(technicianRole));
         when(passwordEncoder.encode(dto.password())).thenReturn("encodedPassword123");
 
-        User savedUser = new User(dto.name(), dto.email(), "encodedPassword123", dto.role());
+        User savedUser = new User(dto.name(), dto.email(), "encodedPassword123", technicianRole);
         savedUser.setId(1L);
 
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
@@ -50,17 +56,33 @@ class UserServiceTest {
         assertEquals(1L, response.id());
         assertEquals(dto.name(), response.name());
         assertEquals(dto.email(), response.email());
-        assertEquals(Role.TECHNICIAN, response.role());
+        assertEquals("TECHNICIAN", response.role());
         assertTrue(response.active());
 
+        verify(roleRepository).findByNameIgnoreCase("TECHNICIAN");
         verify(passwordEncoder).encode("senha123");
         verify(userRepository).save(any(User.class));
     }
 
     @Test
+    @DisplayName("Deve lançar BusinessException quando a role informada não existir na base de dados")
+    void shouldThrowExceptionWhenRoleDoesNotExist() {
+        UserCreateDTO dto = new UserCreateDTO("Carlos Silva", "carlos@helpdesk.com", "senha123", "INVALID_ROLE");
+
+        when(userRepository.existsByEmail(dto.email())).thenReturn(false);
+        when(roleRepository.findByNameIgnoreCase("INVALID_ROLE")).thenReturn(Optional.empty());
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> userService.create(dto));
+        assertEquals("O perfil (role) 'INVALID_ROLE' não existe na base de dados.", exception.getMessage());
+
+        verify(roleRepository).findByNameIgnoreCase("INVALID_ROLE");
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
     @DisplayName("Deve lançar BusinessException quando o e-mail já estiver cadastrado")
     void shouldThrowExceptionWhenEmailAlreadyExists() {
-        UserCreateDTO dto = new UserCreateDTO("Carlos Silva", "carlos@helpdesk.com", "senha123", Role.TECHNICIAN);
+        UserCreateDTO dto = new UserCreateDTO("Carlos Silva", "carlos@helpdesk.com", "senha123", "TECHNICIAN");
 
         when(userRepository.existsByEmail(dto.email())).thenReturn(true);
 
@@ -68,6 +90,7 @@ class UserServiceTest {
         assertEquals("O e-mail informado já está cadastrado.", exception.getMessage());
 
         verify(userRepository, never()).save(any(User.class));
+        verify(roleRepository, never()).findByNameIgnoreCase(any());
     }
 
     @Test
@@ -81,7 +104,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Deve inativar logicamente o usuário com sucesso")
     void shouldInactivateUserSuccessfully() {
-        User user = new User("Ana Santos", "ana@helpdesk.com", "pass", Role.CLIENT);
+        User user = new User("Ana Santos", "ana@helpdesk.com", "pass", new Role(1L, "CLIENT"));
         user.setId(2L);
         user.setActive(true);
 

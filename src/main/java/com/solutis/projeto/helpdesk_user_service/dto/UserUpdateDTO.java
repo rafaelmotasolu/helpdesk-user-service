@@ -1,9 +1,8 @@
 package com.solutis.projeto.helpdesk_user_service.dto;
 
-import com.solutis.projeto.helpdesk_user_service.entity.Role;
+import com.solutis.projeto.helpdesk_user_service.validation.ValidRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record UserUpdateDTO(
@@ -16,6 +15,7 @@ public record UserUpdateDTO(
     @Email(message = "Formato de email inválido")
     String email,
 
-    @NotNull(message = "O perfil (role) é obrigatório")
-    Role role
+    @NotBlank(message = "O perfil (role) é obrigatório")
+    @ValidRole
+    String role
 ) {}

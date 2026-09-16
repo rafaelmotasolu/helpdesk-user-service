@@ -37,7 +37,8 @@ class AuthServiceTest {
     @DisplayName("Deve autenticar com sucesso e retornar token JWT")
     void shouldAuthenticateSuccessfully() {
         AuthRequestDTO request = new AuthRequestDTO("admin@helpdesk.com", "admin123");
-        User user = new User("Admin", "admin@helpdesk.com", "hashedPass", Role.ADMIN);
+        Role adminRole = new Role(1L, "ADMIN");
+        User user = new User("Admin", "admin@helpdesk.com", "hashedPass", adminRole);
         user.setId(1L);
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
@@ -48,15 +49,15 @@ class AuthServiceTest {
 
         assertNotNull(response);
         assertEquals("mocked.jwt.token", response.token());
-        assertEquals(Role.ADMIN, response.role());
+        assertEquals("ADMIN", response.role());
     }
 
-    
     @Test
     @DisplayName("Deve lançar exceção quando a senha estiver incorreta")
     void shouldThrowExceptionWhenPasswordIsInvalid() {
         AuthRequestDTO request = new AuthRequestDTO("admin@helpdesk.com", "wrongpassword");
-        User user = new User("Admin", "admin@helpdesk.com", "hashedPass", Role.ADMIN);
+        Role adminRole = new Role(1L, "ADMIN");
+        User user = new User("Admin", "admin@helpdesk.com", "hashedPass", adminRole);
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.password(), user.getPassword())).thenReturn(false);
@@ -65,12 +66,12 @@ class AuthServiceTest {
         assertEquals("Credenciais inválidas", exception.getMessage());
     }
 
-
     @Test
     @DisplayName("Deve recusar autenticação para usuário inativo")
     void shouldThrowExceptionWhenUserIsInactive() {
         AuthRequestDTO request = new AuthRequestDTO("cliente@helpdesk.com", "senha123");
-        User user = new User("Cliente", "cliente@helpdesk.com", "hashedPass", Role.CLIENT);
+        Role clientRole = new Role(2L, "CLIENT");
+        User user = new User("Cliente", "cliente@helpdesk.com", "hashedPass", clientRole);
         user.setActive(false);
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));

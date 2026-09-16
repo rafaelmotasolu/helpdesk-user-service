@@ -1,9 +1,8 @@
 package com.solutis.projeto.helpdesk_user_service.dto;
 
-import com.solutis.projeto.helpdesk_user_service.entity.Role;
+import com.solutis.projeto.helpdesk_user_service.validation.ValidRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record UserCreateDTO(
@@ -20,6 +19,7 @@ public record UserCreateDTO(
     @Size(min = 6, message = "A senha deve ter no mínimo 6 caracteres")
     String password,
 
-    @NotNull(message = "O perfil (role) é obrigatório")
-    Role role
+    @NotBlank(message = "O perfil (role) é obrigatório")
+    @ValidRole
+    String role
 ) {}

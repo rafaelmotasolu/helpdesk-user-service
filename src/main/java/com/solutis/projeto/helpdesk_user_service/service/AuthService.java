@@ -44,7 +44,7 @@ public class AuthService {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                user.getRole()
+                user.getRole() != null ? user.getRole().getName() : null
         );
     }
 }

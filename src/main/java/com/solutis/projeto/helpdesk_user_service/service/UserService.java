@@ -6,9 +6,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.solutis.projeto.helpdesk_user_service.dto.UserCreateDTO;
 import com.solutis.projeto.helpdesk_user_service.dto.UserResponseDTO;
 import com.solutis.projeto.helpdesk_user_service.dto.UserUpdateDTO;
+import com.solutis.projeto.helpdesk_user_service.entity.Role;
 import com.solutis.projeto.helpdesk_user_service.entity.User;
 import com.solutis.projeto.helpdesk_user_service.exception.BusinessException;
 import com.solutis.projeto.helpdesk_user_service.exception.ResourceNotFoundException;
+import com.solutis.projeto.helpdesk_user_service.repository.RoleRepository;
 import com.solutis.projeto.helpdesk_user_service.repository.UserRepository;
 import java.util.List;
 
@@ -16,10 +18,14 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                       RoleRepository roleRepository,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -29,11 +35,14 @@ public class UserService {
             throw new BusinessException("O e-mail informado já está cadastrado.");
         }
 
+        Role role = roleRepository.findByNameIgnoreCase(dto.role().trim())
+                .orElseThrow(() -> new BusinessException("O perfil (role) '" + dto.role() + "' não existe na base de dados."));
+
         User user = new User(
                 dto.name(),
                 dto.email(),
                 passwordEncoder.encode(dto.password()),
-                dto.role()
+                role
         );
 
         User savedUser = userRepository.save(user);
@@ -64,9 +73,12 @@ public class UserService {
             throw new BusinessException("O e-mail informado já pertence a outro usuário.");
         }
 
+        Role role = roleRepository.findByNameIgnoreCase(dto.role().trim())
+                .orElseThrow(() -> new BusinessException("O perfil (role) '" + dto.role() + "' não existe na base de dados."));
+
         user.setName(dto.name());
         user.setEmail(dto.email());
-        user.setRole(dto.role());
+        user.setRole(role);
 
         return UserResponseDTO.fromEntity(userRepository.save(user));
     }
