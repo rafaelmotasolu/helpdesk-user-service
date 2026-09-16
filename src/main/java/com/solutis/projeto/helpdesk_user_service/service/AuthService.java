@@ -1,12 +1,12 @@
 package com.solutis.projeto.helpdesk_user_service.service;
 
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.solutis.projeto.helpdesk_user_service.dto.AuthRequestDTO;
 import com.solutis.projeto.helpdesk_user_service.dto.AuthResponseDTO;
 import com.solutis.projeto.helpdesk_user_service.entity.User;
-import com.solutis.projeto.helpdesk_user_service.exception.BusinessException;
 import com.solutis.projeto.helpdesk_user_service.repository.UserRepository;
 import com.solutis.projeto.helpdesk_user_service.security.JwtTokenProvider;
 
@@ -27,14 +27,14 @@ public class AuthService {
 
     public AuthResponseDTO login(AuthRequestDTO request) {
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException("Credenciais inválidas"));
+                .orElseThrow(() -> new BadCredentialsException("Credenciais inválidas"));
 
         if (!user.isActive()) {
-            throw new BusinessException("Usuário inativo. Entre em contato com o administrador.");
+            throw new BadCredentialsException("Usuário inativo. Entre em contato com o administrador.");
         }
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new BusinessException("Credenciais inválidas");
+            throw new BadCredentialsException("Credenciais inválidas");
         }
 
         String token = tokenProvider.generateToken(user);

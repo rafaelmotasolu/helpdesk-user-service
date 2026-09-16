@@ -4,7 +4,6 @@ import com.solutis.projeto.helpdesk_user_service.dto.AuthRequestDTO;
 import com.solutis.projeto.helpdesk_user_service.dto.AuthResponseDTO;
 import com.solutis.projeto.helpdesk_user_service.entity.Role;
 import com.solutis.projeto.helpdesk_user_service.entity.User;
-import com.solutis.projeto.helpdesk_user_service.exception.BusinessException;
 import com.solutis.projeto.helpdesk_user_service.repository.UserRepository;
 import com.solutis.projeto.helpdesk_user_service.security.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,7 +62,7 @@ class AuthServiceTest {
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.password(), user.getPassword())).thenReturn(false);
 
-        BusinessException exception = assertThrows(BusinessException.class, () -> authService.login(request));
+        BadCredentialsException exception = assertThrows(BadCredentialsException.class, () -> authService.login(request));
         assertEquals("Credenciais inválidas", exception.getMessage());
     }
 
@@ -76,7 +76,7 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
 
-        BusinessException exception = assertThrows(BusinessException.class, () -> authService.login(request));
+        BadCredentialsException exception = assertThrows(BadCredentialsException.class, () -> authService.login(request));
         assertEquals("Usuário inativo. Entre em contato com o administrador.", exception.getMessage());
     }
 }
