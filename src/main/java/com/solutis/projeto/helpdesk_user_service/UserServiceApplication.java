@@ -11,6 +11,8 @@ import com.solutis.projeto.helpdesk_user_service.entity.Role;
 import com.solutis.projeto.helpdesk_user_service.entity.User;
 import com.solutis.projeto.helpdesk_user_service.repository.UserRepository;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+
 @SpringBootApplication
 @SecurityScheme(
     name = "bearerAuth",
@@ -32,6 +34,7 @@ public class UserServiceApplication {
 
     
     @Bean
+    @ConditionalOnBean(UserRepository.class)
     public CommandLineRunner initAdminUser(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             String adminEmail = "admin@helpdesk.com";
