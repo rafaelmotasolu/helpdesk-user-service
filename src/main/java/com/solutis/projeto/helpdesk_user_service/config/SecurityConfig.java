@@ -50,7 +50,7 @@ public class SecurityConfig {
                 // Atenção: Apenas ADMIN pode criar usuários ou listar todos os usuários diretamente
 
                 .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/users").hasAnyRole("ADMIN", "TECHNICIAN")
+                .requestMatchers(HttpMethod.GET, "/users").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
