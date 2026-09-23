@@ -44,7 +44,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
 
                 // Rotas públicas: autenticação e documentação Swagger
-                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/auth/**", "/users/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                 // Atenção: Apenas ADMIN pode criar usuários ou listar todos os usuários diretamente

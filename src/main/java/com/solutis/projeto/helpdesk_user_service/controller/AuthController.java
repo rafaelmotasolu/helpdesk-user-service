@@ -13,7 +13,7 @@ import com.solutis.projeto.helpdesk_user_service.dto.AuthResponseDTO;
 import com.solutis.projeto.helpdesk_user_service.service.AuthService;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping({"/auth", "/users/auth"})
 @Tag(name = "Autenticação", description = "Endpoints de login e obtenção de token JWT")
 public class AuthController {
 
