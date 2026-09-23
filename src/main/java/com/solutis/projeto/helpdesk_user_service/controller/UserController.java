@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.solutis.projeto.helpdesk_user_service.dto.UserCreateDTO;
+import com.solutis.projeto.helpdesk_user_service.dto.UserPasswordUpdateDTO;
 import com.solutis.projeto.helpdesk_user_service.dto.UserResponseDTO;
 import com.solutis.projeto.helpdesk_user_service.dto.UserUpdateDTO;
 import com.solutis.projeto.helpdesk_user_service.service.UserService;
@@ -54,6 +55,13 @@ public class UserController {
     @Operation(summary = "Inativar um usuário")
     public ResponseEntity<Void> inactivate(@PathVariable Long id) {
         userService.inactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/password")
+    @Operation(summary = "Alterar senha de um usuário")
+    public ResponseEntity<Void> updatePassword(@PathVariable Long id, @Valid @RequestBody UserPasswordUpdateDTO dto) {
+        userService.updatePassword(id, dto);
         return ResponseEntity.noContent().build();
     }
 }

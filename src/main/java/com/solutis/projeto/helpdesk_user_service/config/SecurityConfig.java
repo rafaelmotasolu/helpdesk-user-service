@@ -47,10 +47,13 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**", "/users/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
-                // Atenção: Apenas ADMIN pode criar usuários ou listar todos os usuários diretamente
-
+                // Atenção: Apenas ADMIN pode criar, atualizar, inativar usuários ou alterar senhas
                 .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/users/*").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/users/*").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/users/*/password").authenticated()
                 .requestMatchers(HttpMethod.GET, "/users").authenticated()
+                .requestMatchers(HttpMethod.GET, "/users/*").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

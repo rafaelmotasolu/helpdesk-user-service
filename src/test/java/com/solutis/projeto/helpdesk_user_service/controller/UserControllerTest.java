@@ -131,4 +131,32 @@ class UserControllerTest {
         mockMvc.perform(delete("/users/{id}", 1L).with(csrf()))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("PATCH /users/{id}/password - ADMIN deve alterar senha e retornar 204 No Content")
+    void adminCanChangeUserPassword() throws Exception {
+        com.solutis.projeto.helpdesk_user_service.dto.UserPasswordUpdateDTO dto =
+                new com.solutis.projeto.helpdesk_user_service.dto.UserPasswordUpdateDTO("novaSenha123");
+
+        mockMvc.perform(patch("/users/{id}/password", 1L)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "CLIENT")
+    @DisplayName("PATCH /users/{id}/password - Usuário comum autenticado pode alterar a sua própria senha")
+    void userCanChangeOwnPassword() throws Exception {
+        com.solutis.projeto.helpdesk_user_service.dto.UserPasswordUpdateDTO dto =
+                new com.solutis.projeto.helpdesk_user_service.dto.UserPasswordUpdateDTO("novaSenha123");
+
+        mockMvc.perform(patch("/users/{id}/password", 1L)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isNoContent());
+    }
 }

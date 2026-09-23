@@ -115,4 +115,19 @@ class UserServiceTest {
         assertFalse(user.isActive());
         verify(userRepository).save(user);
     }
+
+    @Test
+    @DisplayName("Deve alterar a senha do usuário com hash BCrypt com sucesso")
+    void shouldUpdateUserPasswordSuccessfully() {
+        User user = new User("Ana Santos", "ana@helpdesk.com", "oldHash", new Role(1L, "CLIENT"));
+        user.setId(2L);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("novaSenha123")).thenReturn("newEncodedHash");
+
+        userService.updatePassword(2L, new com.solutis.projeto.helpdesk_user_service.dto.UserPasswordUpdateDTO("novaSenha123"));
+
+        assertEquals("newEncodedHash", user.getPassword());
+        verify(userRepository).save(user);
+    }
 }

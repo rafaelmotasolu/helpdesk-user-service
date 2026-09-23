@@ -4,6 +4,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.solutis.projeto.helpdesk_user_service.dto.UserCreateDTO;
+import com.solutis.projeto.helpdesk_user_service.dto.UserPasswordUpdateDTO;
 import com.solutis.projeto.helpdesk_user_service.dto.UserResponseDTO;
 import com.solutis.projeto.helpdesk_user_service.dto.UserUpdateDTO;
 import com.solutis.projeto.helpdesk_user_service.entity.Role;
@@ -88,6 +89,30 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com o ID: " + id));
         user.setActive(false);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void updatePassword(Long id, UserPasswordUpdateDTO dto) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null) {
+            boolean isAdmin = auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_ADMIN"));
+            if (!isAdmin) {
+                try {
+                    Long currentUserId = Long.parseLong(auth.getName());
+                    if (!id.equals(currentUserId)) {
+                        throw new org.springframework.security.access.AccessDeniedException("Você só tem permissão para alterar a sua própria senha.");
+                    }
+                } catch (NumberFormatException e) {
+                    throw new org.springframework.security.access.AccessDeniedException("Usuário não autenticado adequadamente.");
+                }
+            }
+        }
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com o ID: " + id));
+        user.setPassword(passwordEncoder.encode(dto.newPassword()));
         userRepository.save(user);
     }
 }
